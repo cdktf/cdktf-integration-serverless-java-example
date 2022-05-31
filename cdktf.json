@@ -1,0 +1,11 @@
+{
+  "language": "java",
+  "app": "mvn -e -q compile exec:java",
+  "projectId": "6581258e-0176-4335-846c-50560b8ec725",
+  "terraformProviders": [],
+  "terraformModules": [],
+  "context": {
+    "excludeStackIdFromLogicalIds": "true",
+    "allowSepCharsInLogicalIds": "true"
+  }
+}
