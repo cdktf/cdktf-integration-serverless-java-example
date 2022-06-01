@@ -24,27 +24,44 @@ public class NodeJSFunction extends Resource {
     private final TerraformAsset asset;
     private final String bundledPath;
 
-    public NodeJSFunction(Construct scope, String id, String path) throws ScriptException, IOException {
+    public NodeJSFunction(Construct scope, String id, String path) {
         super(scope,id);
 
         File file = new File(path);
-        Path workingDirectory = Paths.get(System.getProperty("user.dir"), path);
-        // need base name https://stackoverflow.com/questions/4545937/java-splitting-the-filename-into-a-base-and-extension
 
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("JavaScript");
         // everything up to and excluding lambda
-        engine.put("workingDirectory", Paths.get(String.valueOf(file.getParentFile())).toString());
-        engine.put("entryPoints", Paths.get(file.getName()).toString());
-        String distPath = engine.eval(Files.newBufferedReader(Paths.get(System.getProperty("user.dir"),"lib","nodejs-function.js"), StandardCharsets.UTF_8)).toString();
+        String workingDirectory = Paths.get(String.valueOf(file.getParentFile())).toString();
+        String distPath = NodeJSFunction.bundle(workingDirectory,Paths.get(file.getName()).toString());
 
         // write this so if there isn't an array it won't break
         String basename = Paths.get(file.getName()).toString().split("\\.(?=[^\\.]+$)")[0];
-
         this.bundledPath = Paths.get(distPath, basename+"js").toString();
 
         TerraformAssetConfig.Builder assetConfig = new TerraformAssetConfig.Builder();
         this.asset = new TerraformAsset(this, "lambda-asset", assetConfig.path(distPath).type(AssetType.ARCHIVE).build());
+    }
 
+    public TerraformAsset getAsset(){
+        return this.asset;
+    }
+
+    public String getBundledPath(){
+        return this.bundledPath;
+    }
+
+    static String bundle(String workingDirectory, String entryPoint){
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("JavaScript");
+        engine.put("workingDirectory", workingDirectory);
+        engine.put("entryPoints", entryPoint);
+        String distPath = null;
+        try{
+            distPath = engine.eval(Files.newBufferedReader(Paths.get(System.getProperty("user.dir"),"lib","nodejs-function.js"), StandardCharsets.UTF_8)).toString();
+        } catch(ScriptException scriptException) {
+            System.out.println(scriptException.toString());
+        } catch(IOException ioException) {
+            ioException.printStackTrace();
+        }
+        return distPath;
     }
 }
