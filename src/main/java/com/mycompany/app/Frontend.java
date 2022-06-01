@@ -39,13 +39,13 @@ import java.nio.file.Paths;
 public class Frontend extends Resource {
 
     private String environment;
-    //private String apiEndPoint;
+    private String apiEndPoint;
     private final String S3_ORIGIN_ID = "s3Origin";
 
-    public Frontend(Construct scope, String id, String environment){//, String apiEndPoint){
+    public Frontend(Construct scope, String id, String environment, String apiEndPoint){
         super(scope, id);
         this.environment = environment;
-        //this.apiEndPoint = apiEndPoint;
+        this.apiEndPoint = apiEndPoint;
 
         //Creating s3 instance - adding prefix and tags
         S3Bucket bucket = new S3Bucket(this, "bucket");
@@ -121,7 +121,7 @@ public class Frontend extends Resource {
         FileConfig.Builder fileBuilder = new FileConfig.Builder();
         Path dir = Paths.get(System.getProperty("user.dir"),new String[]{"code", ".env.production.local"});
         fileBuilder.filename(dir.toString());
-        fileBuilder.content("S3_BUCKET_FRONTEND"+"="+bucket.getBucket());//+"\n"+"REACT_APP_API_ENDPOINT"+"="+this.apiEndPoint+"\n");
+        fileBuilder.content("S3_BUCKET_FRONTEND"+"="+bucket.getBucket()+"\n"+"REACT_APP_API_ENDPOINT"+"="+this.apiEndPoint+"\n");
         new File(this,"env",fileBuilder.build());
 
         TerraformOutputConfig.Builder outputConfig = new TerraformOutputConfig.Builder();

@@ -1,7 +1,6 @@
 package com.mycompany.app;
-
+import com.mycompany.app.posts.*;
 import software.constructs.Construct;
-
 import com.hashicorp.cdktf.App;
 import com.hashicorp.cdktf.NamedRemoteWorkspace;
 import com.hashicorp.cdktf.RemoteBackend;
@@ -11,32 +10,55 @@ import com.hashicorp.cdktf.providers.aws.AwsProvider;
 import com.hashicorp.cdktf.providers.aws.AwsProviderConfig;
 import com.hashicorp.cdktf.providers.local.LocalProvider;
 
-public class Main extends TerraformStack
-{
-    //private String apiEndPoint;
-    private String environment;
+public class Main {
 
-    public Main(final Construct scope, final String id, String environment){//, String apiEndPoint) {
-        super(scope, id);
+    static class FrontendStack extends TerraformStack{
+        public FrontendStack(Construct scope, String name, String environment ,String apiEndPoint){
+            super(scope,name);
 
-        AwsProviderConfig.Builder awsConfig = new AwsProviderConfig.Builder();
-        awsConfig.region("eu-central-1");
-        new AwsProvider(this, "aws", awsConfig.build());
+            new AwsProvider(this, "aws", AwsProviderConfig.builder()
+                    .region("eu-central-1")
+                    .build()
+            );
 
-        new LocalProvider(this, "local");
+            new LocalProvider(this, "local");
 
-        new Frontend(this, "frontend", this.environment);//, this.apiEndPoint);
-        // define resources here
+            new Frontend(this, "frontend", environment, apiEndPoint);
+        }
+    }
+
+    static class PostsStack extends TerraformStack{
+
+        public Posts posts;
+        // Might need to look into ability to restrict env like dans example, same with user
+        public PostsStack(Construct scope, String id, String environment, String user){
+            super(scope, id);
+
+            new AwsProvider(this, "aws", AwsProviderConfig.builder()
+                    .region("eu-central-1")
+                    .build()
+            );
+
+            this.posts = new Posts(this, "posts", environment, user);
+        }
     }
 
     public static void main(String[] args) {
         final App app = new App();
-        Main frontendStack = new Main(app, "frontend", "deveolpment");
-        
-        RemoteBackendProps.Builder props = new RemoteBackendProps.Builder();
-        props.organization("terraform-demo-mad");
-        props.workspaces(new NamedRemoteWorkspace("cdktf-integration-serverless-java-example"));
-        new RemoteBackend(frontendStack, props.build());
+        PostsStack posts = new PostsStack(app, "posts-dev","development", System.getenv("CDKTF_USER"));
+        FrontendStack frontend = new FrontendStack(app, "frontend-dev", "development", posts.posts.getApiEndPoint());
+
+        new RemoteBackend(posts, RemoteBackendProps.builder()
+                .organization("terraform-demo-mad")
+                .workspaces(new NamedRemoteWorkspace("cdktf-integration-serverless-java-example"))
+                .build()
+        );
+
+        new RemoteBackend(frontend, RemoteBackendProps.builder()
+                .organization("terraform-demo-mad")
+                .workspaces(new NamedRemoteWorkspace("cdktf-integration-serverless-java-example"))
+                .build()
+        );
 
         app.synth();
     }

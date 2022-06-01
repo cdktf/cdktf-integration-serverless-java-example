@@ -5,7 +5,7 @@ import software.constructs.Construct;
 
 public class Posts extends Resource {
 
-    String apiEndPoint;
+    private String apiEndPoint;
 
     public Posts(Construct scope, String id, String environment, String userSuffix){
         super(scope,id);
@@ -13,5 +13,9 @@ public class Posts extends Resource {
         PostsStorage storage = new PostsStorage(this, "storage", environment, userSuffix);
 
         PostsApi postsApi = new PostsApi(this, "api", environment, storage.getTable(), userSuffix);
+    }
+
+    public String getApiEndPoint(){
+        return this.apiEndPoint;
     }
 }
