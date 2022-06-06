@@ -2,7 +2,6 @@
 cdktf.out
 cdktf.log
 *terraform.*.tfstate*
-
 .classpath
 .project
 .idea

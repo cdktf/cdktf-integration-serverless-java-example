@@ -10,7 +10,7 @@ import java.util.List;
 
 public class PostsStorage extends Resource {
 
-    private DynamodbTable table;
+    private final DynamodbTable table;
 
     public PostsStorage(Construct scope, String id, String environment, String userSuffix){
         super(scope,id);

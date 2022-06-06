@@ -18,19 +18,28 @@ import org.json.JSONObject;
 
 public class PostsApi extends Resource {
 
-    String endPoint;
+    private final String endPoint;
 
     public PostsApi(Construct scope, String id, String environment, DynamodbTable table, String userSuffix){
         super(scope,id);
 
         NodeJSFunction code = new NodeJSFunction(this, "code", Paths.get(System.getProperty("user.dir"), "lambda", "index.ts").toString());
-
+        System.out.println((new JSONObject()
+                .put("Version", "2012-10-17")
+                .put("Statement", new HashMap <String,Object>() {{
+                    put("Action", "sts.AssumeRole");
+                    put("Principal", new HashMap<String, Object>(){{
+                        put("Service","lambda.amazonaws.com");
+                    }});
+                    put("Effect","Allow");
+                    put("Sid", "");
+                }})).toString());
         IamRole role = new IamRole(this, "lambda-exec", IamRoleConfig.builder()
-                .name("sls-example-post-api-lambda-exec-")
+                .name("sls-example-post-api-lambda-exec-" + environment + (userSuffix != null ? userSuffix : ""))
                 .assumeRolePolicy((new JSONObject()
                         .put("Version", "2012-10-17")
                         .put("Statement", new HashMap <String,Object>() {{
-                            put("Action", "sts.AssumeRole");
+                            put("Action", "sts:AssumeRole");
                             put("Principal", new HashMap<String, Object>(){{
                                 put("Service","lambda.amazonaws.com");
                             }});
@@ -38,7 +47,7 @@ public class PostsApi extends Resource {
                             put("Sid", "");
                         }})).toString())
                 .inlinePolicy(List.of(IamRoleInlinePolicy.builder()
-                        .name("sls-example-post-api-lambda-exec-" + environment + (userSuffix != null ? userSuffix : ""))
+                        .name("AllowDynamoDB")
                         .policy((new JSONObject()
                                 .put("Version","2012-10-17")
                                 .put("Statement", new HashMap<String,Object>(){{
@@ -97,5 +106,9 @@ public class PostsApi extends Resource {
         );
 
         this.endPoint = api.getApiEndpoint();
+    }
+
+    public String getEndPoint(){
+        return this.endPoint;
     }
 }

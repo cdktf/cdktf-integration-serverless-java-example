@@ -13,49 +13,39 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-<repositories>
+  <repositories>
     <repository>
-        <id>central</id>
-        <url>https://repo1.maven.org/maven2/</url>
-        <layout>default</layout>
+      <id>central</id>
+      <url>	https://repo1.maven.org/maven2/</url>
     </repository>
-</repositories>
+  </repositories>
+
 
   <dependencies>
     <dependency>
-      <groupId>javax.script</groupId>
-      <artifactId>js-engine</artifactId>
-      <version>1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.1</version>
-    </dependency>
-    <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
-      <version>20180130</version>
+      <version>20220320</version>
+    </dependency>
+    <dependency>
+      <groupId>com.hashicorp</groupId>
+      <artifactId>cdktf-provider-aws</artifactId>
+      <version>5.0.25</version>
+    </dependency>
+    <dependency>
+      <groupId>com.hashicorp</groupId>
+      <artifactId>cdktf</artifactId>
+      <version>0.11.0</version>
+    </dependency>
+    <dependency>
+      <groupId>software.constructs</groupId>
+      <artifactId>constructs</artifactId>
+      <version>10.1.7</version>
     </dependency>
     <dependency>
       <groupId>com.hashicorp</groupId>
       <artifactId>cdktf-provider-local</artifactId>
       <version>0.3.1</version>
-    </dependency>
-    <dependency>
-      <groupId>com.hashicorp</groupId>
-      <artifactId>cdktf-provider-aws</artifactId>
-      <version>5.0.29</version>
-    </dependency>
-    <dependency>
-      <groupId>com.hashicorp</groupId>
-      <artifactId>cdktf</artifactId>
-      <version>0.10.4</version>
-    </dependency>
-    <dependency>
-      <groupId>software.constructs</groupId>
-      <artifactId>constructs</artifactId>
-      <version>10.0.25</version>
     </dependency>
   </dependencies>
 
