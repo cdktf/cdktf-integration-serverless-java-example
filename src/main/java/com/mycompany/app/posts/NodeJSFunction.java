@@ -26,7 +26,7 @@ public class NodeJSFunction extends Resource {
         super(scope,id);
 
         File file = new File(path);
-
+         
         String workingDirectory = Paths.get(String.valueOf(file.getParentFile())).toString();
         String distPath = NodeJSFunction.bundle(workingDirectory,Paths.get(file.getName()).toString());
         

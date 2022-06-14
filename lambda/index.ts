@@ -3,6 +3,7 @@ import {
   APIGatewayProxyResultV2,
   APIGatewayProxyStructuredResultV2,
 } from "aws-lambda";
+import { ConfigurationServicePlaceholders } from "aws-sdk/lib/config_service_placeholders";
 import * as storage from "./posts";
 
 type APIGatewayProxyStructuredResultV2Json = Omit<
@@ -36,6 +37,8 @@ export async function handler(
   try {
     const method: string = event.requestContext.http.method;
     const path: string = event.rawPath;
+
+    console.log(event)
 
     if (path === "/posts") {
       switch (method) {

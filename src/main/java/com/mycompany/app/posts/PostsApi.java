@@ -24,16 +24,6 @@ public class PostsApi extends Resource {
         super(scope,id);
 
         NodeJSFunction code = new NodeJSFunction(this, "code", Paths.get(System.getProperty("user.dir"), "lambda", "index.ts").toString());
-        System.out.println((new JSONObject()
-                .put("Version", "2012-10-17")
-                .put("Statement", new HashMap <String,Object>() {{
-                    put("Action", "sts.AssumeRole");
-                    put("Principal", new HashMap<String, Object>(){{
-                        put("Service","lambda.amazonaws.com");
-                    }});
-                    put("Effect","Allow");
-                    put("Sid", "");
-                }})).toString());
         IamRole role = new IamRole(this, "lambda-exec", IamRoleConfig.builder()
                 .name("sls-example-post-api-lambda-exec-" + environment + (userSuffix != null ? userSuffix : ""))
                 .assumeRolePolicy((new JSONObject()
@@ -67,7 +57,8 @@ public class PostsApi extends Resource {
                 .role(role.getName())
                 .build()
         );
-
+        // NodeJsFunction has Terraform asset that contains path to dist dir in lambda
+        // -lambda function is then given that path and has throught that object 
         LambdaFunction lambda = new LambdaFunction(this, "api", LambdaFunctionConfig.builder()
                 .functionName("sls-example-posts-api-" + environment + (userSuffix != null ? userSuffix : ""))
                 .handler("index.handler")
