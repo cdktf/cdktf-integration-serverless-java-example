@@ -1,15 +1,15 @@
-#CDK for Terraform Serverless Application in Java
+# CDK for Terraform Serverless Application in Java
 
 This repository contains an end to end serverless web app hosted on AWS and deployed with [CDK for Terraform](https://cdk.tf) in Java. In more application specific terms, we are deploying serverless infrastructure for a web app that has a list of posts and a modal to create a new post by specifying author and content. For more information regarding setup and the features of CDKTF [please refer to these docs](https://www.terraform.io/cdktf).
 
-##Techstack
+## Techstack
 
 Frontend: React, Create React App, statically hosted via AWS S3 + CloudFront 
 Backend API: AWS Lambda + API Gateway + DynamoDB
 
-##Application
+## Application
 
-###Stacks 
+### Stacks 
 
 We will have two primary Stacks– PostsStack and FrontendStack
 
@@ -68,7 +68,7 @@ FrontendStack frontendProd = new FrontendStack(app, "frontend-prod", "production
 ```
 Here we created separate instances of the infrastructure for the frontend and backend with different naming of the resources in each application environment (by ways of the environment param), with the ease of adding additional as needed. 
 
-###Posts
+### Posts
 
 The Posts class melds two elements together– the Dynamodb table coming from PostsStorage and our Lambda function and Apigateway coming from PostsApi that takes our new Dynamodb table for setting up the Lambda function environment. 
 
@@ -187,7 +187,7 @@ new LambdaPermission(this, "apigw-lambda", LambdaPermissionConfig.builder()
        );
 ```
 
-###Frontend
+### Frontend
 
 In the Frontend class we provision a S3 Bucket as well as a Cloudfront distribution for our React app to be statically hosted.
 
