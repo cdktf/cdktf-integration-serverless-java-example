@@ -1,45 +1,19 @@
-# CDK for Terraform Serverless Application in Java
+#CDK for Terraform Serverless Application in Java
 
 This repository contains an end to end serverless web app hosted on AWS and deployed with [CDK for Terraform](https://cdk.tf) in Java. In more application specific terms, we are deploying serverless infrastructure for a web app that has a list of posts and a modal to create a new post by specifying author and content. For more information regarding setup and the features of CDKTF [please refer to these docs](https://www.terraform.io/cdktf).
 
-## Techstack
+##Techstack
 
 Frontend: React, Create React App, statically hosted via AWS S3 + CloudFront 
 Backend API: AWS Lambda + API Gateway + DynamoDB
 
-## Application
+##Application
 
-### Initial Setup
-
-To start off we call `cdktf init --template=java` in an empty directory to create the initial project setup. This provides the `main.java` file in the src/…/app folder that will serve as the entry point for all of our infrastructure definitions. 
-
-Your main.java file will roughly look like this…
-
-```java
-public class Main extends TerraformStack
-{
-    public Main(final Construct scope, final String id) {
-        super(scope, id);
-
-        // define resources here
-    }
-
-    public static void main(String[] args) {
-        final App app = new App();
-        Main stack = new Main(app, "test1");
-        new RemoteBackend(stack, RemoteBackendProps.builder().hostname("app.terraform.io").organization("cdktf-lang-demos").workspaces(new NamedRemoteWorkspace("test1")).build());
-        app.synth();
-    }
-}
-```
-
-We will be using multiple stacks in this example. As such, we will not be using the constructor of Main– instead we will use nested classes that have constructors of their own.
-
-### Stacks 
+###Stacks 
 
 We will have two primary Stacks– PostsStack and FrontendStack
 
-For both Stacks, the Post and Frontend class encapsulate the finer details of infrastructure provisioned in each Stack.
+The Post and Frontend class encapsulate the finer details of infrastructure provisioned for each respective Stack. The first parameter denotes the scope of the infrastructure being provision– we use `this` to tie the infrastructure contained in Post/Frontend to the Stack in which it is contained, the same is true with `AwsProvider`. 
 
 ```java
 static class PostsStack extends TerraformStack{
@@ -75,20 +49,26 @@ static class FrontendStack extends TerraformStack{
        }
    }
 ```
-In using nested classes to separate aspects of our infrastructure we create useful abstractions that both improve readability as well as modularity. This modularity comes into play when creating different environments for this application, namely development and production.
+
+
+PostsStack and FrontendStack are static nested classes within main.java, which is the entry point for all infrastructure definitions provided by `cdktf init --template=java`. 
+
+In using different nested Stacks to separate aspects of our infrastructure we allow for separation in state management of the frontend and backend– making alteration and redeployment of a specific piece of infrastructure a simpler process. Additionally, the nested nature of these Stacks allows for the instantiation of the same resource multiple times throughout.
 
 For example…
 
 ```java
+# In the main method of Main.java
+ 
 PostsStack postsDev = new PostsStack(app, "posts-dev", "development", 
 FrontendStack frontendDev = new FrontendStack(app, "frontend-dev", "development", postsDev.posts.getApiEndPoint());
  
 PostsStack postsProd = new PostsStack(app, "posts-prod", "production", "");
-FrontendStack frontendProd = new FrontendStack(app, "frontend-prod", "production", postsProd.posts.getApiEndPoint());```
+FrontendStack frontendProd = new FrontendStack(app, "frontend-prod", "production", postsProd.posts.getApiEndPoint());
 ```
-Here we create separate instances of the infrastructure for the frontend and backend that allows for different naming of the resources in each application environment, with the ease of adding additional as needed. 
+Here we created separate instances of the infrastructure for the frontend and backend with different naming of the resources in each application environment (by ways of the environment param), with the ease of adding additional as needed. 
 
-### Posts
+###Posts
 
 The Posts class melds two elements together– the Dynamodb table coming from PostsStorage and our Lambda function and Apigateway coming from PostsApi that takes our new Dynamodb table for setting up the Lambda function environment. 
 
@@ -113,19 +93,23 @@ public class Posts extends Resource {
 }
 ```
 
-In PostsApi we create our Lambda function and Apigateway, along with the needed permissions and IAM role. NodeJSFunction calls a script to bundle the Lambda function, the path to the Lambda is then contained in a TerraformAsset within NodeJSFunction. With this we are able to provide the path to the bundled Lambda implementation as well as the asset’s hash to our provisioned Lambda. 
+In PostsApi we create our Lambda function and Apigateway, along with the needed permissions and IAM role. NodeJSFunction calls a script to bundle the Lambda function, the path to the bundled Lambda function is then contained in a TerraformAsset within NodeJSFunction. With this we are able to provide the path to the bundled Lambda implementation as well as the asset’s hash to our provisioned Lambda. 
+
+Here we see a use of the environment variable– the one that was initially given in main.java. With this we provide greater description for the resources in each environment as well as avoiding naming conflicts. 
 
 ```java
-public class PostsApi extends Resource {
- 
-   private final String endPoint;
- 
-   public PostsApi(Construct scope, String id, String environment, DynamodbTable table, String userSuffix){
-       super(scope,id);
- 
-       NodeJSFunction code = new NodeJSFunction(this, "code", Paths.get(System.getProperty("user.dir"), "lambda", "index.ts").toString());
        IamRole role = new IamRole(this, "lambda-exec", IamRoleConfig.builder()
                .name("sls-example-post-api-lambda-exec-" + environment + (userSuffix != null ? userSuffix : ""))
+			 //...
+```
+
+It is also in the IAM Role that we define certain policies for the role. It is important to note that policies that are denoted as taking Strings (in IamRole and elsewhere) are really JSON strings. For this I used JSONObject from org.json to build each JSON, then using the toString() method to provide the JSON string to the policy. 
+
+For example…
+
+```java
+IamRole role = new IamRole(this, "lambda-exec", IamRoleConfig.builder()
+               //...
                .assumeRolePolicy((new JSONObject()
                        .put("Version", "2012-10-17")
                        .put("Statement", new HashMap <String,Object>() {{
@@ -136,28 +120,14 @@ public class PostsApi extends Resource {
                            put("Effect","Allow");
                            put("Sid", "");
                        }})).toString())
-               .inlinePolicy(List.of(IamRoleInlinePolicy.builder()
-                       .name("AllowDynamoDB")
-                       .policy((new JSONObject()
-                               .put("Version","2012-10-17")
-                               .put("Statement", new HashMap<String,Object>(){{
-                                   put("Action", List.of("dynamodb:Scan", "dynamodb:Query", "dynamodb:BatchGetItem","dynamodb:GetItem", "dynamodb:PutItem"));
-                                   put("Resource", table.getArn());
-                                   put("Effect", "Allow");
-                               }})
- 
-                       ).toString())
-                       .build()
-               ))
-               .build()
-       );
- 
-       new IamRolePolicyAttachment(this, "lambda-managed-policy", IamRolePolicyAttachmentConfig.builder()
-               .policyArn("arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole")
-               .role(role.getName())
-               .build()
-       );
-       LambdaFunction lambda = new LambdaFunction(this, "api", LambdaFunctionConfig.builder()
+			//...
+```
+
+
+Now we get into the details of our Lambda function. It is here that we provide the Lambda with the role we created above as well as the Dynamodb table from the Storage object created alongside this PostsApi object in the Post class. We also provide other needed details (name of handler, runtime, local path to lambda implementation, ect.).
+
+```java
+LambdaFunction lambda = new LambdaFunction(this, "api", LambdaFunctionConfig.builder()
                .functionName("sls-example-posts-api-" + environment + (userSuffix != null ? userSuffix : ""))
                .handler("index.handler")
                .runtime("nodejs14.x")
@@ -172,8 +142,12 @@ public class PostsApi extends Resource {
                )
                .build()
        );
- 
-       Apigatewayv2Api api = new Apigatewayv2Api(this, "api-gw", Apigatewayv2ApiConfig.builder()
+```
+
+Our API Gateway will sit between our Frontend and Lambda function– both routing requests to our Lambda as well as returning the appropriate result. We give the API Gateway our Lambda function defined as its target. 
+
+```java
+Apigatewayv2Api api = new Apigatewayv2Api(this, "api-gw", Apigatewayv2ApiConfig.builder()
                .name("sls-example-posts-" + environment + (userSuffix != null ? userSuffix : ""))
                .protocolType("HTTP")
                .target(lambda.getArn())
@@ -185,25 +159,35 @@ public class PostsApi extends Resource {
                )
                .build()
        );
+```
+
+We then pass the API Gateway’s endpoint to the PostApi object– this will be later given to our Frontend.
+
+```java
+this.endPoint = api.getApiEndpoint();
+```
+
+Finally we provide Permissions to our Lambda and additional policy for our IAM Role.
+
+```java
+new IamRolePolicyAttachment(this, "lambda-managed-policy", IamRolePolicyAttachmentConfig.builder()
+               .policyArn("arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole")
+               .role(role.getName())
+               .build()
+       );
  
-       new LambdaPermission(this, "apigw-lambda", LambdaPermissionConfig.builder()
+//...
+ 
+new LambdaPermission(this, "apigw-lambda", LambdaPermissionConfig.builder()
                .functionName(lambda.getFunctionName())
                .action("lambda:InvokeFunction")
                .principal("apigateway.amazonaws.com")
                .sourceArn(api.getExecutionArn()+"/*/*")
                .build()
        );
- 
-       this.endPoint = api.getApiEndpoint();
-   }
- 
-   public String getEndPoint(){
-       return this.endPoint;
-   }
-}
 ```
 
-### Frontend
+###Frontend
 
 In the Frontend class we provision a S3 Bucket as well as a Cloudfront distribution for our React app to be statically hosted.
 
@@ -211,41 +195,79 @@ In the Frontend class we provision a S3 Bucket as well as a Cloudfront distribut
 S3Bucket bucket = new S3Bucket(this, "bucket");
        bucket.setBucketPrefix("sls-example-frontend-"+ environment);
        bucket.setTags(new HashMap<>() {{
-           //...
+           put("hc-internet-facing", "true");
        }});
        bucket.putWebsite(S3BucketWebsite.builder()
-               //...
+               .indexDocument("index.html")
+               .errorDocument("index.html")
+               .build()
        );
 ```
+The Cloudfront Distribution speeds up the distribution of our Frontend content and reduces the load on our S3 Bucket by caching its contents. It is here we define the behavior and permission of this cache as well as provide the endpoint of the S3 Bucket we defined above. 
+
 ```java
 CloudfrontDistribution cf = new CloudfrontDistribution(this,"cf", CloudfrontDistributionConfig.builder()
                .comment("Serverless example frontend for env="+ environment)
                .enabled(true)
                .defaultCacheBehavior(CloudfrontDistributionDefaultCacheBehavior.builder()
-                       //...
+                       .allowedMethods(Arrays.asList("DELETE","GET","HEAD","OPTIONS","PATCH","POST","PUT"))
+                       .cachedMethods(Arrays.asList("GET", "HEAD"))
+                       .targetOriginId(s3_ORIGIN_ID)
+                       .viewerProtocolPolicy("redirect-to-https")
+                       .forwardedValues(CloudfrontDistributionDefaultCacheBehaviorForwardedValues.builder()
+                               .queryString(false)
+                               .cookies(CloudfrontDistributionDefaultCacheBehaviorForwardedValuesCookies.builder()
+                                       .forward("none")
+                                       .build()
+                               )
+                               .build()
+                       )
                        .build()
-                       
                )
                .origin(List.of(
                        CloudfrontDistributionOrigin.builder()
-                               //...
+                               .originId(s3_ORIGIN_ID)
+                               .domainName(bucket.getWebsiteEndpoint())
+                               .customOriginConfig(CloudfrontDistributionOriginCustomOriginConfig.builder()
+                                       .originProtocolPolicy("http-only")
+                                       .httpPort(80)
+                                       .httpsPort(443)
+                                       .originSslProtocols(Arrays.asList("TLSv1.2", "TLSv1.1", "TLSv1"))
+                                       .build()
                                )
                                .build()
                ))
                .defaultRootObject("index.html")
                .restrictions(CloudfrontDistributionRestrictions.builder()
-                       //...
+                       .geoRestriction(CloudfrontDistributionRestrictionsGeoRestriction.builder()
+                               .restrictionType("none")
+                               .build()
                        )
                        .build()
                )
                .viewerCertificate(CloudfrontDistributionViewerCertificate.builder()
-                       //...
+                       .cloudfrontDefaultCertificate(true)
                        .build()
                )
                .build()
        );
 ```
 
-The file `env.production.local` provides the S3 Bucket and Backend endpoints to our React app. Finally we create a TerraformOutput that gives us the domain name of the application’s frontend.
+The file `env.production.local` provides the S3 Bucket and Backend endpoints to our React app.
 
-It is important to note that policies within each resource’s configuration take Strings– yet these are really JSON strings. For this I used JSONObject from org.json to build each JSON, then using the toString() method to provide the JSON string to the policy.
+```java
+new File(this,"env", FileConfig.builder()
+               .filename(Paths.get(System.getProperty("user.dir"), "frontend","code", ".env.production.local").toString())
+               .content("S3_BUCKET_FRONTEND"+"="+bucket.getBucket()+"\n"+"REACT_APP_API_ENDPOINT"+"="+ apiEndPoint)
+               .build()
+       );
+```
+
+Finally we create a TerraformOutput that gives us the domain name of the application’s frontend.
+
+```java
+new TerraformOutput(this, "frontend_domainname", TerraformOutputConfig.builder()
+               .value(cf.getDomainName())
+               .build()
+       ).addOverride("value", "https://"+cf.getDomainName());
+```
