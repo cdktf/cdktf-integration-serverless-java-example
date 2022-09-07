@@ -4,54 +4,53 @@ This repository contains an end to end serverless web app hosted on AWS and depl
 
 ## Techstack
 
-Frontend: React, Create React App, statically hosted via AWS S3 + CloudFront 
+Frontend: React, Create React App, statically hosted via AWS S3 + CloudFront
 Backend API: AWS Lambda + API Gateway + DynamoDB
 
 ## Application
 
-### Stacks 
+### Stacks
 
 We will have two primary Stacks– PostsStack and FrontendStack
 
-The Post and Frontend class encapsulate the finer details of infrastructure provisioned for each respective Stack. The first parameter denotes the scope of the infrastructure being provision– we use `this` to tie the infrastructure contained in Post/Frontend to the Stack in which it is contained, the same is true with `AwsProvider`. 
+The Post and Frontend class encapsulate the finer details of infrastructure provisioned for each respective Stack. The first parameter denotes the scope of the infrastructure being provision– we use `this` to tie the infrastructure contained in Post/Frontend to the Stack in which it is contained, the same is true with `AwsProvider`.
 
 ```java
 static class PostsStack extends TerraformStack{
- 
+
        public Posts posts;
-      
+
        public PostsStack(Construct scope, String name, String environment, String user){
            super(scope, name);
- 
+
            new AwsProvider(this, "aws", AwsProviderConfig.builder()
                    .region("eu-central-1")
                    .build()
            );
- 
+
            this.posts = new Posts(this, "posts", environment, user);
        }
    }
-``` 
+```
 
 ```java
 static class FrontendStack extends TerraformStack{
        public FrontendStack(Construct scope, String name, String environment , String apiEndPoint){
            super(scope,name);
- 
+
            new AwsProvider(this, "aws", AwsProviderConfig.builder()
                    .region("eu-central-1")
                    .build()
            );
- 
+
            new LocalProvider(this, "local");
- 
+
            new Frontend(this, "frontend", environment, apiEndPoint);
        }
    }
 ```
 
-
-PostsStack and FrontendStack are static nested classes within main.java, which is the entry point for all infrastructure definitions provided by `cdktf init --template=java`. 
+PostsStack and FrontendStack are static nested classes within main.java, which is the entry point for all infrastructure definitions provided by `cdktf init --template=java`.
 
 In using different nested Stacks to separate aspects of our infrastructure we allow for separation in state management of the frontend and backend– making alteration and redeployment of a specific piece of infrastructure a simpler process. Additionally, the nested nature of these Stacks allows for the instantiation of the same resource multiple times throughout.
 
@@ -59,43 +58,44 @@ For example…
 
 ```java
 # In the main method of Main.java
- 
-PostsStack postsDev = new PostsStack(app, "posts-dev", "development", 
+
+PostsStack postsDev = new PostsStack(app, "posts-dev", "development",
 FrontendStack frontendDev = new FrontendStack(app, "frontend-dev", "development", postsDev.posts.getApiEndPoint());
- 
+
 PostsStack postsProd = new PostsStack(app, "posts-prod", "production", "");
 FrontendStack frontendProd = new FrontendStack(app, "frontend-prod", "production", postsProd.posts.getApiEndPoint());
 ```
-Here we created separate instances of the infrastructure for the frontend and backend with different naming of the resources in each application environment (by ways of the environment param), with the ease of adding additional as needed. 
+
+Here we created separate instances of the infrastructure for the frontend and backend with different naming of the resources in each application environment (by ways of the environment param), with the ease of adding additional as needed.
 
 ### Posts
 
-The Posts class melds two elements together– the Dynamodb table coming from PostsStorage and our Lambda function and Apigateway coming from PostsApi that takes our new Dynamodb table for setting up the Lambda function environment. 
+The Posts class melds two elements together– the Dynamodb table coming from PostsStorage and our Lambda function and Apigateway coming from PostsApi that takes our new Dynamodb table for setting up the Lambda function environment.
 
 ```java
 public class Posts extends Resource {
- 
+
    private final String apiEndPoint;
- 
+
    public Posts(Construct scope, String id, String environment, String userSuffix){
        super(scope,id);
- 
+
        PostsStorage storage = new PostsStorage(this, "storage", environment, userSuffix);
- 
+
        PostsApi postsApi = new PostsApi(this, "api", environment, storage.getTable(), userSuffix);
- 
+
        this.apiEndPoint = postsApi.getEndPoint();
    }
- 
+
    public String getApiEndPoint(){
        return this.apiEndPoint;
    }
 }
 ```
 
-In PostsApi we create our Lambda function and Apigateway, along with the needed permissions and IAM role. NodeJSFunction calls a script to bundle the Lambda function, the path to the bundled Lambda function is then contained in a TerraformAsset within NodeJSFunction. With this we are able to provide the path to the bundled Lambda implementation as well as the asset’s hash to our provisioned Lambda. 
+In PostsApi we create our Lambda function and Apigateway, along with the needed permissions and IAM role. NodeJSFunction calls a script to bundle the Lambda function, the path to the bundled Lambda function is then contained in a TerraformAsset within NodeJSFunction. With this we are able to provide the path to the bundled Lambda implementation as well as the asset’s hash to our provisioned Lambda.
 
-Here we see a use of the environment variable– the one that was initially given in main.java. With this we provide greater description for the resources in each environment as well as avoiding naming conflicts. 
+Here we see a use of the environment variable– the one that was initially given in main.java. With this we provide greater description for the resources in each environment as well as avoiding naming conflicts.
 
 ```java
        IamRole role = new IamRole(this, "lambda-exec", IamRoleConfig.builder()
@@ -103,7 +103,7 @@ Here we see a use of the environment variable– the one that was initially give
 			 //...
 ```
 
-It is also in the IAM Role that we define certain policies for the role. It is important to note that policies that are denoted as taking Strings (in IamRole and elsewhere) are really JSON strings. For this I used JSONObject from org.json to build each JSON, then using the toString() method to provide the JSON string to the policy. 
+It is also in the IAM Role that we define certain policies for the role. It is important to note that policies that are denoted as taking Strings (in IamRole and elsewhere) are really JSON strings. For this I used JSONObject from org.json to build each JSON, then using the toString() method to provide the JSON string to the policy.
 
 For example…
 
@@ -122,7 +122,6 @@ IamRole role = new IamRole(this, "lambda-exec", IamRoleConfig.builder()
                        }})).toString())
 			//...
 ```
-
 
 Now we get into the details of our Lambda function. It is here that we provide the Lambda with the role we created above as well as the Dynamodb table from the Storage object created alongside this PostsApi object in the Post class. We also provide other needed details (name of handler, runtime, local path to lambda implementation, ect.).
 
@@ -144,7 +143,7 @@ LambdaFunction lambda = new LambdaFunction(this, "api", LambdaFunctionConfig.bui
        );
 ```
 
-Our API Gateway will sit between our Frontend and Lambda function– both routing requests to our Lambda as well as returning the appropriate result. We give the API Gateway our Lambda function defined as its target. 
+Our API Gateway will sit between our Frontend and Lambda function– both routing requests to our Lambda as well as returning the appropriate result. We give the API Gateway our Lambda function defined as its target.
 
 ```java
 Apigatewayv2Api api = new Apigatewayv2Api(this, "api-gw", Apigatewayv2ApiConfig.builder()
@@ -175,9 +174,9 @@ new IamRolePolicyAttachment(this, "lambda-managed-policy", IamRolePolicyAttachme
                .role(role.getName())
                .build()
        );
- 
+
 //...
- 
+
 new LambdaPermission(this, "apigw-lambda", LambdaPermissionConfig.builder()
                .functionName(lambda.getFunctionName())
                .action("lambda:InvokeFunction")
@@ -203,7 +202,8 @@ S3Bucket bucket = new S3Bucket(this, "bucket");
                .build()
        );
 ```
-The Cloudfront Distribution speeds up the distribution of our Frontend content and reduces the load on our S3 Bucket by caching its contents. It is here we define the behavior and permission of this cache as well as provide the endpoint of the S3 Bucket we defined above. 
+
+The Cloudfront Distribution speeds up the distribution of our Frontend content and reduces the load on our S3 Bucket by caching its contents. It is here we define the behavior and permission of this cache as well as provide the endpoint of the S3 Bucket we defined above.
 
 ```java
 CloudfrontDistribution cf = new CloudfrontDistribution(this,"cf", CloudfrontDistributionConfig.builder()
@@ -271,3 +271,7 @@ new TerraformOutput(this, "frontend_domainname", TerraformOutputConfig.builder()
                .build()
        ).addOverride("value", "https://"+cf.getDomainName());
 ```
+
+## License
+
+[Mozilla Public License v2.0](https://github.com/hashicorp/cdktf-integration-serverless-java-example/blob/main/LICENSE)
