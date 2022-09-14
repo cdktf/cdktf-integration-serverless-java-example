@@ -9,3 +9,5 @@ cdktf.log
 .vscode
 *.iml
 target/
+src/main/java/imports/
+src/main/resources/
