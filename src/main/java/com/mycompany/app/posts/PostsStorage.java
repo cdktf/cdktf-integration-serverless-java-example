@@ -1,9 +1,9 @@
 package com.mycompany.app.posts;
 
 import com.hashicorp.cdktf.Resource;
-import com.hashicorp.cdktf.providers.aws.dynamodb.DynamodbTable;
-import com.hashicorp.cdktf.providers.aws.dynamodb.DynamodbTableAttribute;
-import com.hashicorp.cdktf.providers.aws.dynamodb.DynamodbTableConfig;
+import imports.aws.dynamodb.DynamodbTable;
+import imports.aws.dynamodb.DynamodbTableAttribute;
+import imports.aws.dynamodb.DynamodbTableConfig;
 import software.constructs.Construct;
 
 import java.util.List;

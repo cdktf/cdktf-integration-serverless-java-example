@@ -1,12 +1,12 @@
 package com.mycompany.app.posts;
 
 import com.hashicorp.cdktf.Resource;
-import com.hashicorp.cdktf.providers.aws.apigatewayv2.Apigatewayv2Api;
-import com.hashicorp.cdktf.providers.aws.apigatewayv2.Apigatewayv2ApiConfig;
-import com.hashicorp.cdktf.providers.aws.apigatewayv2.Apigatewayv2ApiCorsConfiguration;
-import com.hashicorp.cdktf.providers.aws.dynamodb.DynamodbTable;
-import com.hashicorp.cdktf.providers.aws.iam.*;
-import com.hashicorp.cdktf.providers.aws.lambdafunction.*;
+import imports.aws.apigatewayv2.Apigatewayv2Api;
+import imports.aws.apigatewayv2.Apigatewayv2ApiConfig;
+import imports.aws.apigatewayv2.Apigatewayv2ApiCorsConfiguration;
+import imports.aws.dynamodb.DynamodbTable;
+import imports.aws.iam.*;
+import imports.aws.lambdafunction.*;
 import software.constructs.Construct;
 
 import java.nio.file.Paths;

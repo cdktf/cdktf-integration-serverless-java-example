@@ -6,9 +6,9 @@ import com.hashicorp.cdktf.NamedRemoteWorkspace;
 import com.hashicorp.cdktf.RemoteBackend;
 import com.hashicorp.cdktf.RemoteBackendProps;
 import com.hashicorp.cdktf.TerraformStack;
-import com.hashicorp.cdktf.providers.aws.AwsProvider;
-import com.hashicorp.cdktf.providers.aws.AwsProviderConfig;
-import com.hashicorp.cdktf.providers.local.LocalProvider;
+import imports.aws.AwsProvider;
+import imports.aws.AwsProviderConfig;
+import imports.local.LocalProvider;
 
 import java.util.Arrays;
 
