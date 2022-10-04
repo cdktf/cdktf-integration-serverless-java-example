@@ -1,16 +1,15 @@
 package com.mycompany.app;
 
 
-import com.hashicorp.cdktf.Resource;
 import com.hashicorp.cdktf.TerraformOutput;
 import com.hashicorp.cdktf.TerraformOutputConfig;
-import com.hashicorp.cdktf.providers.aws.cloudfront.*;
-import com.hashicorp.cdktf.providers.aws.s3.S3Bucket;
-import com.hashicorp.cdktf.providers.aws.s3.S3BucketPolicy;
-import com.hashicorp.cdktf.providers.aws.s3.S3BucketPolicyConfig;
-import com.hashicorp.cdktf.providers.aws.s3.S3BucketWebsite;
-import com.hashicorp.cdktf.providers.local.File;
-import com.hashicorp.cdktf.providers.local.FileConfig;
+import com.hashicorp.cdktf.providers.aws.cloudfront_distribution.*;
+import com.hashicorp.cdktf.providers.aws.s3_bucket.S3Bucket;
+import com.hashicorp.cdktf.providers.aws.s3_bucket_policy.S3BucketPolicy;
+import com.hashicorp.cdktf.providers.aws.s3_bucket_policy.S3BucketPolicyConfig;
+import com.hashicorp.cdktf.providers.aws.s3_bucket.S3BucketWebsite;
+import com.hashicorp.cdktf.providers.local.file.File;
+import com.hashicorp.cdktf.providers.local.file.FileConfig;
 import org.json.JSONObject;
 import software.constructs.Construct;
 
@@ -21,7 +20,7 @@ import java.util.List;
 
 // Make sure there is only one instance of this class
     // Look into Singleton pattern
-public class Frontend extends Resource {
+public class Frontend extends Construct {
 
     public Frontend(Construct scope, String id, String environment, String apiEndPoint){
         super(scope, id);

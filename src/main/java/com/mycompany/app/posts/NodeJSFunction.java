@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-import com.hashicorp.cdktf.Resource;
 import com.hashicorp.cdktf.TerraformAsset;
 import com.hashicorp.cdktf.AssetType;
 import com.hashicorp.cdktf.TerraformAssetConfig;
@@ -16,7 +15,7 @@ import com.hashicorp.cdktf.TerraformAssetConfig;
 
 import software.constructs.Construct;
 
-public class NodeJSFunction extends Resource {
+public class NodeJSFunction extends Construct {
 
     // Readonly
     private final TerraformAsset asset;
