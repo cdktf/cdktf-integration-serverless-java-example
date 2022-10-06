@@ -1,9 +1,8 @@
 package com.mycompany.app.posts;
 
-import com.hashicorp.cdktf.Resource;
 import software.constructs.Construct;
 
-public class Posts extends Resource {
+public class Posts extends Construct {
 
     private final String apiEndPoint;
 

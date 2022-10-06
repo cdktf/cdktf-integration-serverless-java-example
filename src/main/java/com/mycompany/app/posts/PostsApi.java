@@ -1,12 +1,18 @@
 package com.mycompany.app.posts;
 
-import com.hashicorp.cdktf.Resource;
-import com.hashicorp.cdktf.providers.aws.apigatewayv2.Apigatewayv2Api;
-import com.hashicorp.cdktf.providers.aws.apigatewayv2.Apigatewayv2ApiConfig;
-import com.hashicorp.cdktf.providers.aws.apigatewayv2.Apigatewayv2ApiCorsConfiguration;
-import com.hashicorp.cdktf.providers.aws.dynamodb.DynamodbTable;
-import com.hashicorp.cdktf.providers.aws.iam.*;
-import com.hashicorp.cdktf.providers.aws.lambdafunction.*;
+import com.hashicorp.cdktf.providers.aws.apigatewayv2_api.Apigatewayv2Api;
+import com.hashicorp.cdktf.providers.aws.apigatewayv2_api.Apigatewayv2ApiConfig;
+import com.hashicorp.cdktf.providers.aws.apigatewayv2_api.Apigatewayv2ApiCorsConfiguration;
+import com.hashicorp.cdktf.providers.aws.dynamodb_table.DynamodbTable;
+import com.hashicorp.cdktf.providers.aws.iam_role.IamRole;
+import com.hashicorp.cdktf.providers.aws.iam_role.IamRoleConfig;
+import com.hashicorp.cdktf.providers.aws.iam_role.IamRoleInlinePolicy;
+import com.hashicorp.cdktf.providers.aws.iam_role_policy_attachment.IamRolePolicyAttachment;
+import com.hashicorp.cdktf.providers.aws.iam_role_policy_attachment.IamRolePolicyAttachmentConfig;
+import com.hashicorp.cdktf.providers.aws.lambda_function.*;
+import com.hashicorp.cdktf.providers.aws.lambda_permission.LambdaPermission;
+import com.hashicorp.cdktf.providers.aws.lambda_permission.LambdaPermissionConfig;
+
 import software.constructs.Construct;
 
 import java.nio.file.Paths;
@@ -16,7 +22,7 @@ import java.util.List;
 
 import org.json.JSONObject;
 
-public class PostsApi extends Resource {
+public class PostsApi extends Construct {
 
     private final String endPoint;
 

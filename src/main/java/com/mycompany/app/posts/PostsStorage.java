@@ -1,14 +1,13 @@
 package com.mycompany.app.posts;
 
-import com.hashicorp.cdktf.Resource;
-import com.hashicorp.cdktf.providers.aws.dynamodb.DynamodbTable;
-import com.hashicorp.cdktf.providers.aws.dynamodb.DynamodbTableAttribute;
-import com.hashicorp.cdktf.providers.aws.dynamodb.DynamodbTableConfig;
+import com.hashicorp.cdktf.providers.aws.dynamodb_table.DynamodbTable;
+import com.hashicorp.cdktf.providers.aws.dynamodb_table.DynamodbTableAttribute;
+import com.hashicorp.cdktf.providers.aws.dynamodb_table.DynamodbTableConfig;
 import software.constructs.Construct;
 
 import java.util.List;
 
-public class PostsStorage extends Resource {
+public class PostsStorage extends Construct {
 
     private final DynamodbTable table;
 
