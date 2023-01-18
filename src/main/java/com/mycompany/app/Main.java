@@ -4,7 +4,7 @@ import software.constructs.Construct;
 import com.hashicorp.cdktf.App;
 import com.hashicorp.cdktf.NamedRemoteWorkspace;
 import com.hashicorp.cdktf.RemoteBackend;
-import com.hashicorp.cdktf.RemoteBackendProps;
+import com.hashicorp.cdktf.RemoteBackendConfig;
 import com.hashicorp.cdktf.TerraformStack;
 import com.hashicorp.cdktf.providers.aws.provider.AwsProvider;
 import com.hashicorp.cdktf.providers.aws.provider.AwsProviderConfig;
@@ -56,13 +56,13 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         final App app = new App();
 
         Boolean USE_REMOTE_BACKEND = (System.getenv("USE_REMOTE_BACKEND") == "true");
         if(System.getenv("PREVIEW_BUILD_IDENTIFIER") != null){
             if(Arrays.stream(new String[]{"development", "production"}).anyMatch(System.getenv("PREVIEW_BUILD_IDENTIFIER")::equals)){
-                throw new Exception("environment variable PREVIEW_BUILD_IDENTIFIER may not be set to development or production but it was set to"+System.getenv("PREVIEW_BUILD_IDENTIFIER"));
+                throw new RuntimeException("environment variable PREVIEW_BUILD_IDENTIFIER may not be set to development or production but it was set to"+System.getenv("PREVIEW_BUILD_IDENTIFIER"));
             }
 
             new PreviewStack(app, "preview", System.getenv("PREVIEW_BUILD_IDENTIFIER"));
@@ -70,7 +70,7 @@ public class Main {
 
             PostsStack postsDev = new PostsStack(app, "posts-dev", "test2development", System.getenv("CDKTF_USER"));
             if (USE_REMOTE_BACKEND) {
-                new RemoteBackend(postsDev, RemoteBackendProps.builder()
+                new RemoteBackend(postsDev, RemoteBackendConfig.builder()
                         .organization("terraform-demo-mad")
                         .workspaces(new NamedRemoteWorkspace("cdktf-integration-serverless-java-example"))
                         .build()
@@ -80,7 +80,7 @@ public class Main {
 
             FrontendStack frontendDev = new FrontendStack(app, "frontend-dev", "test2development", postsDev.posts.getApiEndPoint());
             if (USE_REMOTE_BACKEND) {
-                new RemoteBackend(frontendDev, RemoteBackendProps.builder()
+                new RemoteBackend(frontendDev, RemoteBackendConfig.builder()
                         .organization("terraform-demo-mad")
                         .workspaces(new NamedRemoteWorkspace("cdktf-integration-serverless-java-example"))
                         .build()
@@ -89,7 +89,7 @@ public class Main {
 
             PostsStack postsProd = new PostsStack(app, "posts-prod", "production", "");
             if (USE_REMOTE_BACKEND) {
-                new RemoteBackend(postsProd, RemoteBackendProps.builder()
+                new RemoteBackend(postsProd, RemoteBackendConfig.builder()
                         .organization("terraform-demo-mad")
                         .workspaces(new NamedRemoteWorkspace("cdktf-integration-serverless-java-example"))
                         .build()
@@ -98,7 +98,7 @@ public class Main {
 
             FrontendStack frontendProd = new FrontendStack(app, "frontend-prod", "production", postsProd.posts.getApiEndPoint());
             if (USE_REMOTE_BACKEND) {
-                new RemoteBackend(frontendProd, RemoteBackendProps.builder()
+                new RemoteBackend(frontendProd, RemoteBackendConfig.builder()
                         .organization("terraform-demo-mad")
                         .workspaces(new NamedRemoteWorkspace("cdktf-integration-serverless-java-example"))
                         .build()
