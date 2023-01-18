@@ -12,7 +12,7 @@ Additionally an AWS account and [AWS credentials configured for use with Terrafo
 
 ### To Deploy
 
-First run `mvn install` in the root directory of the project to install all the needed packages. Then cd to the `lambda` folder and run `yarn install` to install everything needed for our AWS lambda function.
+First run `mvn install` in the root directory of the project to install all the needed packages. Then cd to the `lambda` folder and run `npm install` to install everything needed for our AWS lambda function. The same thing applies to the `lib` directory, run `npm install` in there to install the required dependencies for building our lambda function.
 
 Lastly, in the root directory of the example `cdktf deploy` can be runned with the stacks that you wish to deploy e.g `cdktf deploy posts-dev frontend-dev` for deploying the dev environement or `cdktf deploy posts-prod frontend-prod` for deploying the production environment.
 
